@@ -1,0 +1,467 @@
+<title>MM2 Auto-Delivery Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root {
+    --bg: #F5F6FA;
+    --surface: #FFFFFF;
+    --ink: #171B2C;
+    --muted: #5A6079;
+    --line: #DDE0EC;
+    --line-strong: #B9BDD2;
+    --accent: #6D3AE8;
+    --accent-soft: #EFE9FD;
+    --ok: #1FA860;      --ok-soft: #E4F5EC;
+    --warn: #C98508;    --warn-soft: #FCF3E0;
+    --err: #E0442E;     --err-soft: #FCE9E6;
+    --info: #2D7FE0;    --info-soft: #E7F0FC;
+    --shadow: 0 1px 2px rgba(23,27,44,.06), 0 6px 18px rgba(23,27,44,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1120;
+      --surface: #181B30;
+      --ink: #EDEEF7;
+      --muted: #9AA0BC;
+      --line: #2A2E4A;
+      --line-strong: #414868;
+      --accent: #9B6CFF;
+      --accent-soft: #2A2350;
+      --ok: #3DC97E;      --ok-soft: #12301F;
+      --warn: #E8B031;    --warn-soft: #33270C;
+      --err: #F0604A;     --err-soft: #3A1712;
+      --info: #5AA0F2;    --info-soft: #142A47;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1120;
+    --surface: #181B30;
+    --ink: #EDEEF7;
+    --muted: #9AA0BC;
+    --line: #2A2E4A;
+    --line-strong: #414868;
+    --accent: #9B6CFF;
+    --accent-soft: #2A2350;
+    --ok: #3DC97E;      --ok-soft: #12301F;
+    --warn: #E8B031;    --warn-soft: #33270C;
+    --err: #F0604A;     --err-soft: #3A1712;
+    --info: #5AA0F2;    --info-soft: #142A47;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .page {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 40px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  header.masthead { text-align: center; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: "Chakra Petch", "Instrument Sans", sans-serif;
+    font-weight: 700;
+    font-size: clamp(24px, 3.4vw, 36px);
+    margin: 6px 0 4px;
+    text-wrap: balance;
+  }
+  .masthead p {
+    margin: 0 auto;
+    max-width: 62ch;
+    color: var(--muted);
+  }
+
+  /* ---------- diagram ---------- */
+  .diagram-scroll { overflow-x: auto; padding: 4px 2px 10px; }
+  .diagram { min-width: 1200px; width: 1200px; margin: 0 auto; }
+
+  .flow-row { display: flex; align-items: stretch; }
+  .step {
+    width: 170px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 14px 12px 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .flow-arrow {
+    width: 36px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--line-strong);
+  }
+  .step-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent);
+    color: #fff;
+  }
+  :root[data-theme="dark"] .step-num { color: #14102A; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .step-num { color: #14102A; }
+  }
+  .step h3, .fail-card h3 {
+    font-family: "Chakra Petch", sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.25;
+  }
+  .step p, .fail-card p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+  .icon-chip {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .icon-chip svg { width: 22px; height: 22px; }
+  .tint-accent { background: var(--accent-soft); color: var(--accent); }
+  .tint-ok     { background: var(--ok-soft);     color: var(--ok); }
+  .tint-warn   { background: var(--warn-soft);   color: var(--warn); }
+  .tint-err    { background: var(--err-soft);    color: var(--err); }
+  .tint-info   { background: var(--info-soft);   color: var(--info); }
+
+  .connectors { display: block; }
+
+  .fail-row { display: flex; align-items: stretch; margin-left: 140px; width: 920px; }
+  .fail-card {
+    width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left-width: 3px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .fail-card header { display: flex; align-items: center; gap: 8px; }
+  .fail-card .icon-chip { width: 30px; height: 30px; border-radius: 7px; }
+  .fail-card .icon-chip svg { width: 17px; height: 17px; }
+  .fail-card ul { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--muted); }
+  .fail-card ul li { margin: 1px 0; }
+  .edge-err  { border-left-color: var(--err); }
+  .edge-warn { border-left-color: var(--warn); }
+  .edge-info { border-left-color: var(--info); }
+  .edge-ok   { border-left-color: var(--ok); }
+  .fail-arrow {
+    width: 40px; flex: none;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    color: var(--line-strong);
+  }
+  .fail-arrow small {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 9.5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  figure.figure { margin: 0; }
+  figcaption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 14px;
+  }
+
+  /* ---------- components ---------- */
+  section.panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 20px 24px;
+  }
+  .panel > h2 {
+    font-family: "Chakra Petch", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    text-align: center;
+    letter-spacing: .02em;
+  }
+  .components {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 18px;
+  }
+  .component {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 6px;
+  }
+  .component .icon-chip { width: 34px; height: 34px; border-radius: 8px; }
+  .component .icon-chip svg { width: 18px; height: 18px; }
+  .component b { display: block; font-size: 13.5px; font-weight: 600; }
+  .component span { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+
+  /* ---------- guarantees ---------- */
+  .guarantees {
+    background: var(--ok-soft);
+    border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
+    border-radius: 14px;
+    padding: 16px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 28px;
+  }
+  .guarantees .lead {
+    display: flex; align-items: center; gap: 8px;
+    font-family: "Chakra Petch", sans-serif;
+    font-weight: 700;
+    color: var(--ok);
+    font-size: 15px;
+  }
+  .guarantee { display: flex; align-items: center; gap: 7px; font-size: 13.5px; }
+  .guarantee svg { width: 16px; height: 16px; color: var(--ok); flex: none; }
+
+  footer.colophon {
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <div class="eyebrow">Forallgames · Phase 1</div>
+    <h1>MM2 Automated Delivery System Flow</h1>
+    <p>How an order moves from checkout to in-game delivery — and what happens when a trade fails.</p>
+  </header>
+
+  <figure class="figure">
+    <div class="diagram-scroll">
+      <div class="diagram">
+
+        <!-- happy path -->
+        <div class="flow-row">
+          <div class="step">
+            <span class="step-num">1</span>
+            <span class="icon-chip tint-accent" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.6 12.5A2 2 0 0 0 9.6 17h8.7a2 2 0 0 0 2-1.6L22 7H6"/></svg>
+            </span>
+            <h3>Order Placed</h3>
+            <p>Customer picks MM2 items and pays at checkout.</p>
+          </div>
+          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+
+          <div class="step">
+            <span class="step-num">2</span>
+            <span class="icon-chip tint-ok" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="m8 15 2 2 4-4"/></svg>
+            </span>
+            <h3>Payment Verified</h3>
+            <p>Gateway confirms the payment before anything ships.</p>
+          </div>
+          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+
+          <div class="step">
+            <span class="step-num">3</span>
+            <span class="icon-chip tint-accent" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg>
+            </span>
+            <h3>Added to Queue</h3>
+            <p>Order joins the delivery queue with the customer's username.</p>
+          </div>
+          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+
+          <div class="step">
+            <span class="step-num">4</span>
+            <span class="icon-chip tint-accent" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M12 8V4M9 4h6"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9.5 16.5h5"/></svg>
+            </span>
+            <h3>Bot Delivers</h3>
+            <p>Delivery bot joins the customer's server and trades the items.</p>
+          </div>
+          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+
+          <div class="step">
+            <span class="step-num">5</span>
+            <span class="icon-chip tint-info" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg>
+            </span>
+            <h3>Verification</h3>
+            <p>System checks the trade completed and the right items moved.</p>
+          </div>
+          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+
+          <div class="step">
+            <span class="step-num">6</span>
+            <span class="icon-chip tint-ok" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>
+            </span>
+            <h3>Completed</h3>
+            <p>Order marked complete and the customer is notified.</p>
+          </div>
+        </div>
+
+        <!-- dashed connectors between the two rows -->
+        <svg class="connectors" viewBox="0 0 1200 84" width="1200" height="84" role="img"
+             aria-label="A failed delivery at step 4 drops into the failure lane; a successful retry re-enters the queue at step 3.">
+          <defs>
+            <marker id="arr-err" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--err)"/>
+            </marker>
+            <marker id="arr-mut" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--line-strong)"/>
+            </marker>
+          </defs>
+          <!-- step 4 fails -> Delivery Failed -->
+          <path d="M703 4 V30 H240 V74" fill="none" stroke="var(--err)" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#arr-err)"/>
+          <text x="712" y="22" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="var(--err)">delivery error</text>
+          <!-- successful retry -> back to queue -->
+          <path d="M480 78 V52 H520 V8" fill="none" stroke="var(--line-strong)" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#arr-mut)"/>
+          <text x="530" y="49" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="var(--muted)">retry OK &#8594; re-queued</text>
+        </svg>
+
+        <!-- failure lane -->
+        <div class="fail-row">
+          <div class="fail-card edge-err">
+            <header>
+              <span class="icon-chip tint-err" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>
+              </span>
+              <h3>Delivery Failed</h3>
+            </header>
+            <ul>
+              <li>Bot couldn't join server</li>
+              <li>Trade declined</li>
+              <li>Customer offline</li>
+              <li>Other errors</li>
+            </ul>
+          </div>
+          <span class="fail-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+          </span>
+
+          <div class="fail-card edge-warn">
+            <header>
+              <span class="icon-chip tint-warn" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v5h-5"/></svg>
+              </span>
+              <h3>Retry</h3>
+            </header>
+            <p>Retries up to 3 times with a delay between attempts.</p>
+          </div>
+          <span class="fail-arrow">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+            <small>3&#215; fail</small>
+          </span>
+
+          <div class="fail-card edge-info">
+            <header>
+              <span class="icon-chip tint-info" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.2 3.6-5 7-5s6.2 1.8 7 5"/></svg>
+              </span>
+              <h3>Escalate</h3>
+            </header>
+            <p>Order moves to the manual review queue for a human to handle.</p>
+          </div>
+          <span class="fail-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+          </span>
+
+          <div class="fail-card edge-ok">
+            <header>
+              <span class="icon-chip tint-ok" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>
+              </span>
+              <h3>Resolved</h3>
+            </header>
+            <p>Issue fixed manually and the order is completed or refunded.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <figcaption>Happy path runs 1&#8594;6; any failure at step 4 drops into the failure lane, and a successful retry re-enters the queue.</figcaption>
+  </figure>
+
+  <section class="panel">
+    <h2>Key Components</h2>
+    <div class="components">
+      <div class="component">
+        <span class="icon-chip tint-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+        <div><b>Website / Store</b><span>Handles orders and customer accounts.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-ok" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+        <div><b>Payment Gateway</b><span>Processes and verifies payments.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-warn" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="2.8"/><path d="M4 5.5V12c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8V5.5"/><path d="M4 12v6.5c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8V12"/></svg></span>
+        <div><b>Database</b><span>Stores orders, inventory, and logs.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg></span>
+        <div><b>Queue System</b><span>Orders deliveries and paces execution.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M12 8V4M9 4h6"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9.5 16.5h5"/></svg></span>
+        <div><b>Delivery Bots</b><span>Dedicated Roblox accounts holding stock.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg></span>
+        <div><b>Verification System</b><span>Confirms each delivery succeeded.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-err" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-2.5 8-2.5 8h17S18 15 18 8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg></span>
+        <div><b>Notification System</b><span>Emails, Discord, and site alerts.</span></div>
+      </div>
+      <div class="component">
+        <span class="icon-chip tint-info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.2 3.6-5 7-5s6.2 1.8 7 5"/></svg></span>
+        <div><b>Manual Review</b><span>Humans resolve escalated orders.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="guarantees">
+    <span class="lead">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg>
+      System Guarantees
+    </span>
+    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Reliable delivery with retries</span>
+    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Real-time inventory tracking</span>
+    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Secure and safe transactions</span>
+    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Transparent logs and history</span>
+  </section>
+
+  <footer class="colophon">MM2 AUTO-DELIVERY &middot; PHASE 1 &middot; FORALLGAMES</footer>
+</div>
