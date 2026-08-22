@@ -5,6 +5,7 @@
   :root {
     --bg: #F5F6FA;
     --surface: #FFFFFF;
+    --inset: #F0F1F7;
     --ink: #171B2C;
     --muted: #5A6079;
     --line: #DDE0EC;
@@ -21,6 +22,7 @@
     :root:not([data-theme="light"]) {
       --bg: #0F1120;
       --surface: #181B30;
+      --inset: #131628;
       --ink: #EDEEF7;
       --muted: #9AA0BC;
       --line: #2A2E4A;
@@ -37,6 +39,7 @@
   :root[data-theme="dark"] {
     --bg: #0F1120;
     --surface: #181B30;
+    --inset: #131628;
     --ink: #EDEEF7;
     --muted: #9AA0BC;
     --line: #2A2E4A;
@@ -65,7 +68,7 @@
     padding: 40px 24px 64px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 26px;
   }
 
   header.masthead { text-align: center; }
@@ -86,17 +89,26 @@
   }
   .masthead p {
     margin: 0 auto;
-    max-width: 62ch;
+    max-width: 68ch;
     color: var(--muted);
   }
 
-  /* ---------- diagram ---------- */
-  .diagram-scroll { overflow-x: auto; padding: 4px 2px 10px; }
-  .diagram { min-width: 1200px; width: 1200px; margin: 0 auto; }
+  .icon-chip {
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .tint-accent { background: var(--accent-soft); color: var(--accent); }
+  .tint-ok     { background: var(--ok-soft);     color: var(--ok); }
+  .tint-warn   { background: var(--warn-soft);   color: var(--warn); }
+  .tint-err    { background: var(--err-soft);    color: var(--err); }
+  .tint-info   { background: var(--info-soft);   color: var(--info); }
 
-  .flow-row { display: flex; align-items: stretch; }
-  .step {
-    width: 170px;
+  /* ---------- main pipeline ---------- */
+  .diagram-scroll { overflow-x: auto; padding: 4px 2px 10px; }
+  .pipeline { min-width: 1180px; width: 1180px; margin: 0 auto; display: flex; align-items: stretch; }
+  .stage {
+    width: 188px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -108,148 +120,179 @@
     align-items: center;
     gap: 8px;
   }
-  .flow-arrow {
-    width: 36px;
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--line-strong);
-  }
-  .step-num {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 12px;
-    font-weight: 600;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--accent);
-    color: #fff;
-  }
-  :root[data-theme="dark"] .step-num { color: #14102A; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .step-num { color: #14102A; }
-  }
-  .step h3, .fail-card h3 {
+  .stage .icon-chip { width: 40px; height: 40px; }
+  .stage .icon-chip svg { width: 22px; height: 22px; }
+  .stage h3 {
     font-family: "Chakra Petch", sans-serif;
     font-size: 14.5px;
     font-weight: 600;
     margin: 0;
     line-height: 1.25;
   }
-  .step p, .fail-card p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
-  .icon-chip {
-    width: 40px; height: 40px;
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    flex: none;
-  }
-  .icon-chip svg { width: 22px; height: 22px; }
-  .tint-accent { background: var(--accent-soft); color: var(--accent); }
-  .tint-ok     { background: var(--ok-soft);     color: var(--ok); }
-  .tint-warn   { background: var(--warn-soft);   color: var(--warn); }
-  .tint-err    { background: var(--err-soft);    color: var(--err); }
-  .tint-info   { background: var(--info-soft);   color: var(--info); }
-
-  .connectors { display: block; }
-
-  .fail-row { display: flex; align-items: stretch; margin-left: 140px; width: 920px; }
-  .fail-card {
-    width: 200px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-left-width: 3px;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .fail-card header { display: flex; align-items: center; gap: 8px; }
-  .fail-card .icon-chip { width: 30px; height: 30px; border-radius: 7px; }
-  .fail-card .icon-chip svg { width: 17px; height: 17px; }
-  .fail-card ul { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--muted); }
-  .fail-card ul li { margin: 1px 0; }
-  .edge-err  { border-left-color: var(--err); }
-  .edge-warn { border-left-color: var(--warn); }
-  .edge-info { border-left-color: var(--info); }
-  .edge-ok   { border-left-color: var(--ok); }
-  .fail-arrow {
-    width: 40px; flex: none;
+  .stage p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+  .stage.is-worker { border-color: var(--accent); border-width: 1.5px; }
+  .stage-arrow {
+    width: 60px; flex: none;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 2px;
+    gap: 3px;
     color: var(--line-strong);
   }
-  .fail-arrow small {
+  .stage-arrow small {
     font-family: "IBM Plex Mono", monospace;
     font-size: 9.5px;
     color: var(--muted);
     white-space: nowrap;
   }
-
   figure.figure { margin: 0; }
   figcaption {
     text-align: center;
     font-size: 13px;
     color: var(--muted);
-    margin-top: 14px;
+    margin-top: 12px;
   }
 
-  /* ---------- components ---------- */
+  /* ---------- panels ---------- */
   section.panel {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
     box-shadow: var(--shadow);
-    padding: 20px 24px;
+    padding: 22px 24px;
   }
   .panel > h2 {
     font-family: "Chakra Petch", sans-serif;
     font-size: 16px;
     font-weight: 700;
-    margin: 0 0 16px;
-    text-align: center;
+    margin: 0 0 4px;
     letter-spacing: .02em;
   }
-  .components {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 10px 18px;
+  .panel > .panel-sub {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 78ch;
   }
-  .component {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px 6px;
-  }
-  .component .icon-chip { width: 34px; height: 34px; border-radius: 8px; }
-  .component .icon-chip svg { width: 18px; height: 18px; }
-  .component b { display: block; font-size: 13.5px; font-weight: 600; }
-  .component span { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
-
-  /* ---------- guarantees ---------- */
-  .guarantees {
-    background: var(--ok-soft);
-    border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
-    border-radius: 14px;
-    padding: 16px 24px;
-    display: flex;
-    flex-wrap: wrap;
+  .badge {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px 28px;
+    gap: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    vertical-align: 2px;
   }
-  .guarantees .lead {
-    display: flex; align-items: center; gap: 8px;
+
+  /* worker internals */
+  .worker-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .worker-grid { grid-template-columns: 1fr; } }
+  .worker-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px;
+  }
+  .wstep {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--inset);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 12px;
+  }
+  .wstep-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px; font-weight: 600;
+    width: 21px; height: 21px; flex: none;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .wstep b { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+  .wstep span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  .bot-state {
+    background: var(--inset);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .bot-state h4 {
     font-family: "Chakra Petch", sans-serif;
-    font-weight: 700;
-    color: var(--ok);
-    font-size: 15px;
+    font-size: 13px; font-weight: 600;
+    margin: 0 0 10px;
   }
-  .guarantee { display: flex; align-items: center; gap: 7px; font-size: 13.5px; }
-  .guarantee svg { width: 16px; height: 16px; color: var(--ok); flex: none; }
+  .bot-state dl { margin: 0; display: flex; flex-direction: column; gap: 7px; }
+  .bot-state .kv {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    font-size: 12.5px;
+  }
+  .bot-state dt { color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+  .bot-state dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+  .bot-state .note {
+    margin: 12px 0 0; padding-top: 10px;
+    border-top: 1px dashed var(--line-strong);
+    font-size: 12px; color: var(--muted); line-height: 1.4;
+  }
+
+  /* failure ladder */
+  .ladder { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; }
+  .rung {
+    flex: 1 1 150px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--inset);
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: relative;
+  }
+  .rung .rung-tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .rung b { font-size: 13.5px; font-weight: 600; }
+  .rung span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+  .ladder-arrow {
+    flex: none;
+    align-self: center;
+    color: var(--line-strong);
+    display: flex; align-items: center;
+  }
+  .t-warn .rung-tag { color: var(--warn); }
+  .t-err  .rung-tag { color: var(--err); }
+  .t-info .rung-tag { color: var(--info); }
+  .t-accent .rung-tag { color: var(--accent); }
+
+  /* isolation strip */
+  .layers { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+  @media (max-width: 760px) { .layers { grid-template-columns: 1fr; } }
+  .layer-zone {
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .zone-stable { background: var(--inset); border: 1px solid var(--line); }
+  .zone-adapt  { background: var(--accent-soft); border: 1.5px dashed var(--accent); }
+  .layer-zone h4 {
+    font-family: "Chakra Petch", sans-serif;
+    font-size: 13px; font-weight: 600;
+    margin: 0 0 3px;
+  }
+  .layer-zone .zone-sub { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    font-size: 12.5px; font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 11px;
+  }
+  .zone-adapt .chip { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 
   footer.colophon {
     text-align: center;
@@ -261,207 +304,149 @@
 
 <div class="page">
   <header class="masthead">
-    <div class="eyebrow">Forallgames · Phase 1</div>
-    <h1>MM2 Automated Delivery System Flow</h1>
-    <p>How an order moves from checkout to in-game delivery — and what happens when a trade fails.</p>
+    <div class="eyebrow">Forallgames &middot; Paid POC</div>
+    <h1>MM2 Auto-Delivery Architecture</h1>
+    <p>Website/API &rarr; Delivery Queue &rarr; Windows Roblox Worker &rarr; Trade Verification &rarr; Order Updated. External Windows automation and vision control the Roblox client &mdash; no injected executor.</p>
   </header>
 
+  <!-- main pipeline -->
   <figure class="figure">
     <div class="diagram-scroll">
-      <div class="diagram">
-
-        <!-- happy path -->
-        <div class="flow-row">
-          <div class="step">
-            <span class="step-num">1</span>
-            <span class="icon-chip tint-accent" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.6 12.5A2 2 0 0 0 9.6 17h8.7a2 2 0 0 0 2-1.6L22 7H6"/></svg>
-            </span>
-            <h3>Order Placed</h3>
-            <p>Customer picks MM2 items and pays at checkout.</p>
-          </div>
-          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
-
-          <div class="step">
-            <span class="step-num">2</span>
-            <span class="icon-chip tint-ok" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="m8 15 2 2 4-4"/></svg>
-            </span>
-            <h3>Payment Verified</h3>
-            <p>Gateway confirms the payment before anything ships.</p>
-          </div>
-          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
-
-          <div class="step">
-            <span class="step-num">3</span>
-            <span class="icon-chip tint-accent" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg>
-            </span>
-            <h3>Added to Queue</h3>
-            <p>Order joins the delivery queue with the customer's username.</p>
-          </div>
-          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
-
-          <div class="step">
-            <span class="step-num">4</span>
-            <span class="icon-chip tint-accent" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M12 8V4M9 4h6"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9.5 16.5h5"/></svg>
-            </span>
-            <h3>Bot Delivers</h3>
-            <p>Delivery bot joins the customer's server and trades the items.</p>
-          </div>
-          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
-
-          <div class="step">
-            <span class="step-num">5</span>
-            <span class="icon-chip tint-info" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg>
-            </span>
-            <h3>Verification</h3>
-            <p>System checks the trade completed and the right items moved.</p>
-          </div>
-          <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
-
-          <div class="step">
-            <span class="step-num">6</span>
-            <span class="icon-chip tint-ok" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>
-            </span>
-            <h3>Completed</h3>
-            <p>Order marked complete and the customer is notified.</p>
-          </div>
+      <div class="pipeline">
+        <div class="stage">
+          <span class="icon-chip tint-accent" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </span>
+          <h3>Website / API</h3>
+          <p>Takes the order, confirms payment, exposes order status.</p>
         </div>
+        <span class="stage-arrow">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+          <small>paid order</small>
+        </span>
 
-        <!-- dashed connectors between the two rows -->
-        <svg class="connectors" viewBox="0 0 1200 84" width="1200" height="84" role="img"
-             aria-label="A failed delivery at step 4 drops into the failure lane; a successful retry re-enters the queue at step 3.">
-          <defs>
-            <marker id="arr-err" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M0 0 L10 5 L0 10 z" fill="var(--err)"/>
-            </marker>
-            <marker id="arr-mut" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M0 0 L10 5 L0 10 z" fill="var(--line-strong)"/>
-            </marker>
-          </defs>
-          <!-- step 4 fails -> Delivery Failed -->
-          <path d="M703 4 V30 H240 V74" fill="none" stroke="var(--err)" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#arr-err)"/>
-          <text x="712" y="22" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="var(--err)">delivery error</text>
-          <!-- successful retry -> back to queue -->
-          <path d="M480 78 V52 H520 V8" fill="none" stroke="var(--line-strong)" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#arr-mut)"/>
-          <text x="530" y="49" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="var(--muted)">retry OK &#8594; re-queued</text>
-        </svg>
-
-        <!-- failure lane -->
-        <div class="fail-row">
-          <div class="fail-card edge-err">
-            <header>
-              <span class="icon-chip tint-err" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>
-              </span>
-              <h3>Delivery Failed</h3>
-            </header>
-            <ul>
-              <li>Bot couldn't join server</li>
-              <li>Trade declined</li>
-              <li>Customer offline</li>
-              <li>Other errors</li>
-            </ul>
-          </div>
-          <span class="fail-arrow" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+        <div class="stage">
+          <span class="icon-chip tint-accent" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg>
           </span>
-
-          <div class="fail-card edge-warn">
-            <header>
-              <span class="icon-chip tint-warn" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v5h-5"/></svg>
-              </span>
-              <h3>Retry</h3>
-            </header>
-            <p>Retries up to 3 times with a delay between attempts.</p>
-          </div>
-          <span class="fail-arrow">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
-            <small>3&#215; fail</small>
-          </span>
-
-          <div class="fail-card edge-info">
-            <header>
-              <span class="icon-chip tint-info" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.2 3.6-5 7-5s6.2 1.8 7 5"/></svg>
-              </span>
-              <h3>Escalate</h3>
-            </header>
-            <p>Order moves to the manual review queue for a human to handle.</p>
-          </div>
-          <span class="fail-arrow" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
-          </span>
-
-          <div class="fail-card edge-ok">
-            <header>
-              <span class="icon-chip tint-ok" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>
-              </span>
-              <h3>Resolved</h3>
-            </header>
-            <p>Issue fixed manually and the order is completed or refunded.</p>
-          </div>
+          <h3>Delivery Queue</h3>
+          <p>Holds pending deliveries; matches each order to a bot that stocks the item.</p>
         </div>
+        <span class="stage-arrow">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+          <small>worker claims</small>
+        </span>
 
+        <div class="stage is-worker">
+          <span class="icon-chip tint-accent" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M12 8V4M9 4h6"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9.5 16.5h5"/></svg>
+          </span>
+          <h3>Windows Roblox Worker</h3>
+          <p>Drives the Roblox client from outside &mdash; automation + vision &mdash; and runs the trade.</p>
+        </div>
+        <span class="stage-arrow">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+          <small>trade result</small>
+        </span>
+
+        <div class="stage">
+          <span class="icon-chip tint-info" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg>
+          </span>
+          <h3>Trade Verification</h3>
+          <p>Confirms the trade completed and the correct item left the bot's inventory.</p>
+        </div>
+        <span class="stage-arrow">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+          <small>delivered</small>
+        </span>
+
+        <div class="stage">
+          <span class="icon-chip tint-ok" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>
+          </span>
+          <h3>Order Updated</h3>
+          <p>Order marked Delivered on the website; customer notified; logs stored.</p>
+        </div>
       </div>
     </div>
-    <figcaption>Happy path runs 1&#8594;6; any failure at step 4 drops into the failure lane, and a successful retry re-enters the queue.</figcaption>
+    <figcaption>The delivery pipeline. A failed trade re-enters at the queue via the failure ladder below; only verified trades mark an order Delivered.</figcaption>
   </figure>
 
+  <!-- worker internals -->
   <section class="panel">
-    <h2>Key Components</h2>
-    <div class="components">
-      <div class="component">
-        <span class="icon-chip tint-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
-        <div><b>Website / Store</b><span>Handles orders and customer accounts.</span></div>
+    <h2>Inside the Windows Roblox Worker <span class="badge tint-accent">one per bot account</span></h2>
+    <p class="panel-sub">Each worker is an independent process controlling one Roblox client through external Windows automation and screen vision &mdash; no injected executor. Workers report to the API and never talk to each other.</p>
+    <div class="worker-grid">
+      <div class="worker-steps">
+        <div class="wstep"><span class="wstep-num">1</span><div><b>Control the client</b><span>Launch and drive Roblox via OS-level input and vision.</span></div></div>
+        <div class="wstep"><span class="wstep-num">2</span><div><b>Join the session</b><span>Enter the correct MM2 server for this order.</span></div></div>
+        <div class="wstep"><span class="wstep-num">3</span><div><b>Identify the buyer</b><span>Locate the customer in-game by username.</span></div></div>
+        <div class="wstep"><span class="wstep-num">4</span><div><b>Open the trade</b><span>Send the trade request and wait for accept.</span></div></div>
+        <div class="wstep"><span class="wstep-num">5</span><div><b>Select the item</b><span>Pick the ordered MM2 item from bot inventory.</span></div></div>
+        <div class="wstep"><span class="wstep-num">6</span><div><b>Complete the trade</b><span>Confirm both sides and finalize.</span></div></div>
+        <div class="wstep"><span class="wstep-num">7</span><div><b>Verify the result</b><span>Check the trade succeeded and inventory changed.</span></div></div>
+        <div class="wstep"><span class="wstep-num">8</span><div><b>Report Delivered</b><span>Post the result back to the website API.</span></div></div>
       </div>
-      <div class="component">
-        <span class="icon-chip tint-ok" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
-        <div><b>Payment Gateway</b><span>Processes and verifies payments.</span></div>
+      <aside class="bot-state">
+        <h4>Per-bot state (tracked by the API)</h4>
+        <dl>
+          <div class="kv"><dt>status</dt><dd><span class="dot" style="background: var(--ok)"></span>delivering</dd></div>
+          <div class="kv"><dt>inventory</dt><dd>34 items</dd></div>
+          <div class="kv"><dt>current&#95;order</dt><dd>#1082</dd></div>
+          <div class="kv"><dt>heartbeat</dt><dd>4s ago</dd></div>
+          <div class="kv"><dt>retries</dt><dd>0 / 3</dd></div>
+        </dl>
+        <p class="note">Inventory is tracked per bot, so the queue only assigns orders a bot can actually fulfill. A missed heartbeat flags the worker as down and its order is requeued.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- failure ladder -->
+  <section class="panel">
+    <h2>When a Trade Fails</h2>
+    <p class="panel-sub">Each rung runs only if the previous one didn't recover the order. Every step is logged against the order.</p>
+    <div class="ladder">
+      <div class="rung t-warn"><span class="rung-tag">1 &middot; retry</span><b>Retry the trade</b><span>Same bot retries with a delay, up to the retry limit.</span></div>
+      <span class="ladder-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      <div class="rung t-warn"><span class="rung-tag">2 &middot; requeue</span><b>Requeue the order</b><span>Order returns to the queue for a later attempt.</span></div>
+      <span class="ladder-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      <div class="rung t-info"><span class="rung-tag">3 &middot; restart</span><b>Restart Roblox client</b><span>Worker relaunches a stuck or crashed client.</span></div>
+      <span class="ladder-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      <div class="rung t-accent"><span class="rung-tag">4 &middot; reassign</span><b>Assign another bot</b><span>A different bot with the item in stock takes the order.</span></div>
+      <span class="ladder-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      <div class="rung t-err"><span class="rung-tag">5 &middot; alert</span><b>Alert the admin</b><span>Order flagged for manual review and resolution.</span></div>
+    </div>
+  </section>
+
+  <!-- change isolation -->
+  <section class="panel">
+    <h2>What Changes When Roblox Updates</h2>
+    <p class="panel-sub">The client-control layer is the only part coupled to Roblox/MM2 UI. When the game changes, that layer is re-tuned; everything else keeps running untouched.</p>
+    <div class="layers">
+      <div class="layer-zone zone-stable">
+        <h4>Stable core</h4>
+        <p class="zone-sub">Independent of the Roblox client &mdash; unchanged by game updates.</p>
+        <div class="chips">
+          <span class="chip">Website</span>
+          <span class="chip">API</span>
+          <span class="chip">Database</span>
+          <span class="chip">Delivery queue</span>
+          <span class="chip">Order &amp; inventory logic</span>
+          <span class="chip">Notifications</span>
+        </div>
       </div>
-      <div class="component">
-        <span class="icon-chip tint-warn" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="2.8"/><path d="M4 5.5V12c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8V5.5"/><path d="M4 12v6.5c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8V12"/></svg></span>
-        <div><b>Database</b><span>Stores orders, inventory, and logs.</span></div>
-      </div>
-      <div class="component">
-        <span class="icon-chip tint-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg></span>
-        <div><b>Queue System</b><span>Orders deliveries and paces execution.</span></div>
-      </div>
-      <div class="component">
-        <span class="icon-chip tint-accent" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M12 8V4M9 4h6"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9.5 16.5h5"/></svg></span>
-        <div><b>Delivery Bots</b><span>Dedicated Roblox accounts holding stock.</span></div>
-      </div>
-      <div class="component">
-        <span class="icon-chip tint-info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg></span>
-        <div><b>Verification System</b><span>Confirms each delivery succeeded.</span></div>
-      </div>
-      <div class="component">
-        <span class="icon-chip tint-err" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-2.5 8-2.5 8h17S18 15 18 8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg></span>
-        <div><b>Notification System</b><span>Emails, Discord, and site alerts.</span></div>
-      </div>
-      <div class="component">
-        <span class="icon-chip tint-info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.2 3.6-5 7-5s6.2 1.8 7 5"/></svg></span>
-        <div><b>Manual Review</b><span>Humans resolve escalated orders.</span></div>
+      <div class="layer-zone zone-adapt">
+        <h4>Adaptation layer</h4>
+        <p class="zone-sub">Roblox/MM2 changes land here only.</p>
+        <div class="chips">
+          <span class="chip">Client control (input)</span>
+          <span class="chip">Screen vision</span>
+          <span class="chip">Trade UI handling</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="guarantees">
-    <span class="lead">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 7.8-8 9-4.5-1.2-8-4-8-9V6z"/><path d="m8.5 12 2.4 2.4 4.6-4.8"/></svg>
-      System Guarantees
-    </span>
-    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Reliable delivery with retries</span>
-    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Real-time inventory tracking</span>
-    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Secure and safe transactions</span>
-    <span class="guarantee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16.5 9"/></svg>Transparent logs and history</span>
-  </section>
-
-  <footer class="colophon">MM2 AUTO-DELIVERY &middot; PHASE 1 &middot; FORALLGAMES</footer>
+  <footer class="colophon">MM2 AUTO-DELIVERY &middot; PAID POC &middot; FORALLGAMES</footer>
 </div>
