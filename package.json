@@ -1,0 +1,26 @@
+{
+  "name": "mm2-auto-delivery",
+  "version": "0.1.0",
+  "description": "MM2 auto-delivery POC: orders API, delivery queue, per-bot workers, failure ladder",
+  "main": "server/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "worker-sim": "node worker-sim/worker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jokerwitha1/Forallgames-.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jokerwitha1/Forallgames-/issues"
+  },
+  "homepage": "https://github.com/jokerwitha1/Forallgames-#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1"
+  }
+}

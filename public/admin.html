@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MM2 Delivery Admin</title>
+<style>
+  :root {
+    --bg: #0F1120; --surface: #181B30; --inset: #131628;
+    --ink: #EDEEF7; --muted: #9AA0BC; --line: #2A2E4A;
+    --accent: #9B6CFF; --ok: #3DC97E; --warn: #E8B031; --err: #F0604A; --info: #5AA0F2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 "Segoe UI", system-ui, sans-serif; padding: 24px;
+  }
+  h1 { font-size: 18px; margin: 0 0 2px; letter-spacing: .02em; }
+  .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card h2 { font-size: 13px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td { font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .s-idle, .s-queued        { background: #2A2E4A; color: var(--muted); }
+  .s-delivering, .s-assigned{ background: #2A2350; color: var(--accent); }
+  .s-delivered              { background: #12301F; color: var(--ok); }
+  .s-offline, .s-pending_payment { background: #33270C; color: var(--warn); }
+  .s-manual_review, .s-disabled, .s-cancelled { background: #3A1712; color: var(--err); }
+  .bot { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--inset); }
+  .bot .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .bot b { font-size: 13.5px; }
+  .bot .meta { color: var(--muted); font-size: 11.5px; margin-top: 4px; }
+  .inv { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .inv span { font-size: 11px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  .events { max-height: 300px; overflow-y: auto; font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; color: var(--muted); }
+  .events div { padding: 2px 0; border-bottom: 1px solid var(--line); }
+  .events .ev { color: var(--ink); }
+  button {
+    background: var(--accent); color: #14102A; border: 0; border-radius: 7px;
+    font-weight: 600; font-size: 12px; padding: 4px 10px; cursor: pointer;
+  }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  #err { color: var(--err); font-size: 12.5px; margin-bottom: 10px; display: none; }
+</style>
+</head>
+<body>
+  <h1>MM2 Delivery — Admin</h1>
+  <p class="sub">Live view of bots, queue, and order history. Polls every 2s.</p>
+  <div id="err"></div>
+
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <h2>Bots</h2>
+        <div id="bots"></div>
+      </div>
+      <div class="card">
+        <h2>Event log</h2>
+        <div class="events" id="events"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Orders</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>#</th><th>Buyer</th><th>Item</th><th>Status</th><th>Bot</th><th>Retries</th><th>Last fail</th><th></th></tr></thead>
+          <tbody id="orders"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let apiKey;
+  try { apiKey = localStorage.getItem('mm2_api_key'); } catch (e) { apiKey = null; }
+  if (!apiKey) {
+    apiKey = prompt('API key:', 'dev-key') || 'dev-key';
+    try { localStorage.setItem('mm2_api_key', apiKey); } catch (e) {}
+  }
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pill = s => `<span class="pill s-${esc(s)}">${esc(s)}</span>`;
+
+  async function call(path, body) {
+    const res = await fetch(path, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) throw new Error(`${path}: ${res.status}`);
+    return res.json();
+  }
+
+  async function resolveOrder(id, outcome) {
+    await call('/api/admin/resolve', { order_id: id, outcome });
+    refresh();
+  }
+
+  async function refresh() {
+    try {
+      const s = await call('/api/admin/state');
+      $('err').style.display = 'none';
+
+      $('bots').innerHTML = s.bots.map(b => `
+        <div class="bot">
+          <div class="row"><b>${esc(b.id)}</b>${pill(b.status)}</div>
+          <div class="meta">
+            ${esc(b.roblox_user || '—')} · heartbeat ${b.heartbeat_age_s == null ? 'never' : b.heartbeat_age_s + 's ago'}
+            ${b.current_order ? ' · order #' + b.current_order : ''}
+          </div>
+          <div class="inv">${b.inventory.map(i => `<span>${esc(i.item)} × ${i.qty}</span>`).join('') || '<span>no stock</span>'}</div>
+        </div>`).join('') || '<div class="meta">No bots registered yet.</div>';
+
+      $('orders').innerHTML = s.orders.map(o => `
+        <tr>
+          <td>${o.id}</td>
+          <td>${esc(o.buyer_username)}</td>
+          <td>${esc(o.item)}</td>
+          <td>${pill(o.status)}</td>
+          <td>${esc(o.assigned_bot || '—')}</td>
+          <td>${o.retries}/${s.max_retries}</td>
+          <td>${esc(o.fail_reason || '')}</td>
+          <td>${o.status === 'manual_review'
+                ? `<button onclick="resolveOrder(${o.id},'requeue')">Requeue</button>
+                   <button class="ghost" onclick="resolveOrder(${o.id},'cancelled')">Cancel</button>` : ''}</td>
+        </tr>`).join('');
+
+      $('events').innerHTML = s.events.map(e =>
+        `<div>${new Date(e.ts).toLocaleTimeString()} · #${e.order_id} <span class="ev">${esc(e.event)}</span> ${esc(e.detail)}</div>`
+      ).join('');
+    } catch (e) {
+      $('err').textContent = 'Cannot reach API: ' + e.message + ' (wrong key? server down?)';
+      $('err').style.display = 'block';
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>
